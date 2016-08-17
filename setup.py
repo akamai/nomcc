@@ -25,7 +25,7 @@ setup(
     products using the Nominum Command Channel.''',
     packages     = ['nomcc'],
     author       = 'Nominum',
-    url          = 'https://github.com/nomrthalley/nomcc',
+    url          = 'https://github.com/nominum/nomcc',
     install_requires = ['pycrypto'],
     classifiers = [
         "Development Status :: 5 - Production/Stable",
