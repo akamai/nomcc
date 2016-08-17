@@ -6,9 +6,7 @@ and with Python 3.3 and later.
 
 ## Installation
 
-- If you have pip installed, you can simply run
-`pip install nomcc`
-- If not, download the source file, unzip it, and then run
+Download the source file, unzip it, and then run
 `sudo python setup.py install`
 
 ## About this release
