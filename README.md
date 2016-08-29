@@ -1,4 +1,8 @@
+# nomcc
+
 ## Introduction
+
+[https://github.com/nominum/nomcc](https://github.com/nominum/nomcc)
 
 The "nomcc" Python library allows easy communication with services that use
 the Nominum Command Channel protocol.  It works with Python 2.6 and 2.7,
@@ -29,8 +33,3 @@ with nomcc.connect('cacheserve') as session:
      for r in session.sequence('resolver.mget'):
          print r
 ```
-
-## Bug reports
-
-Bug reports may be filed on github.
-
