@@ -62,7 +62,7 @@ class BadSyntax(CCException):
     _default_msg = 'message syntax error'
 
 class BadForm(CCException):
-    """The message was missing required protcol elements, e.g. _ctrl
+    """The message was missing required protocol elements, e.g. _ctrl
     """
     _default_msg = 'message format error'
 
