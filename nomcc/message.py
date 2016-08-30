@@ -40,6 +40,11 @@ def error(request, detail, request_type=None):
     response['_data']['err'] = detail
     return response
 
+def request(content):
+    message = {'_ctrl' : {},
+               '_data' : content}
+    return message
+
 def event(content):
     message = {'_ctrl' : {'_evt' : b'1'},
                '_data' : content}
