@@ -16,10 +16,17 @@
 
 class CCException(Exception):
     _default_msg = ''
+    _always_use_default_msg = True
 
     def __str__(self):
         s = super(CCException, self).__str__()
-        return s or self._default_msg
+        if s:
+            if self._always_use_default_msg:
+                return self._default_msg + ': ' + s
+            else:
+                return s
+        else:
+            return self._default_msg
 
 class MessageTooBig(CCException):
     """The message is too large."""
@@ -31,7 +38,7 @@ class BadResponse(CCException):
 
 class BadNoncing(CCException):
     """The message did not pass nonce checks."""
-    _default_msg = 'bad nonce'
+    _default_msg = 'bad noncing'
 
 class NotResponse(CCException):
     """The message is not a response."""
@@ -111,6 +118,7 @@ class Error(CCException):
     return a response with an 'err' tag.
     """
     _default_msg = 'unknown error'
+    _always_use_default_msg = False
 
 class Timeout(CCException):
     """The operation timed out.
