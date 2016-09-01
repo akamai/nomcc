@@ -108,6 +108,11 @@ class BadChannelValue(CCException):
     """
     _default_msg = 'bad channel value'
 
+class UnknownChannel(CCException):
+    """The parameter is not a known channel
+    """
+    _default_msg = 'unknown channel'
+
 class UnsupportedAddressFamily(CCException):
     """The address family of the socket is not supported.
     """

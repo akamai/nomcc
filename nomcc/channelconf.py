@@ -142,4 +142,7 @@ def find(name):
     with _lock:
         if default_channelconf is None:
             default_channelconf = ChannelConf()
-    return default_channelconf[name]
+    try:
+        return default_channelconf[name]
+    except KeyError:
+        raise nomcc.exceptions.UnknownChannel(name)
