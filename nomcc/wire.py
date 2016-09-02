@@ -165,7 +165,7 @@ def _decode_table(item, top_level=False, want_stringify=None):
     while item != b'':
         l = struct.unpack('B', item[:1])[0] + 1
         if len(item) < l:
-            raise UnexpectedEnd
+            raise UnexpectedEnd('table too short')
         key = maybe_decode(item[1:l])
         if top_level and key == '_data' and want_stringify is None:
             # We don't already have a stringify setting, and this is
@@ -190,11 +190,11 @@ def _decode_list(item, want_stringify=False):
 
 def _decode(item, want_stringify=False):
     if len(item) < 5:
-        raise UnexpectedEnd
+        raise UnexpectedEnd('value header too short')
     rest = item[5:]
     (type, l) = struct.unpack("!BI", item[:5])
     if len(rest) < l:
-        raise UnexpectedEnd
+        raise UnexpectedEnd('value data too short')
     if type == cc_vtype_binarydata:
         value = rest[:l]
         if want_stringify:
@@ -215,17 +215,21 @@ def _basic_syntax_checks(message, maybe_encrypted):
 
     if not encrypted:
         _ctrl = message.get('_ctrl')
-        if _ctrl is None or not isinstance(_ctrl, dict):
-            raise BadForm
+        if _ctrl is None:
+            raise BadForm('_ctrl must be present')
+        if not isinstance(_ctrl, dict):
+            raise BadForm('_ctrl must be a table')
         _data = message.get('_data')
-        if _data is None or not isinstance(_data, dict):
-            raise BadForm
+        if _data is None:
+            raise BadForm('_data must be present')
+        if not isinstance(_data, dict):
+            raise BadForm('_data must be a table')
         if not '_snon' in _ctrl:
-            raise BadForm
+            raise BadForm('not nonced')
 
     _auth = message.get('_auth')
     if _auth is not None and not isinstance(_auth, dict):
-        raise BadForm
+        raise BadForm('_auth must be a table')
 
 def from_wire(message, secret):
     """Convert a message from wire format to dictionary format
@@ -234,15 +238,15 @@ def from_wire(message, secret):
     """
 
     if len(message) < 4:
-        raise UnexpectedEnd
+        raise UnexpectedEnd('message version too short')
     version = struct.unpack('!I', message[:4])
     if version[0] != cc_version:
-        raise BadVersion
+        raise BadVersion('unknown version %u' % version[0])
     rest = message[4:]
 
     if secret != None:
         if len(message) < 43:
-            raise UnexpectedEnd
+            raise UnexpectedEnd('encrypted message too short')
         auth = rest[:21]
         msig = rest[21:43]
         payload = rest[43:]
@@ -271,13 +275,13 @@ def from_wire(message, secret):
             encrypted_data = _aes256
             compressed = False
         if not isinstance(encrypted_data, binary_type):
-            raise BadForm
+            raise BadForm('encrypted input is not a string')
 
     if secret is None:
         raise NeedSecret
 
     if len(encrypted_data) % cc_aes256_blocksize != 0:
-        raise BadForm
+        raise BadForm('encrypted input is not a multiple of AES block size')
 
     key = _key_from_secret(secret)
     wire = _decrypt_message(key, encrypted_data)
@@ -289,7 +293,7 @@ def from_wire(message, secret):
         wire = wire[4:]
 
     if wirelen > len(wire):
-        raise UnexpectedEnd
+        raise UnexpectedEnd('inner message too short')
     table = _decode_table(wire[0:wirelen], True)
     _basic_syntax_checks(table, False)
 
