@@ -236,9 +236,6 @@ def _basic_syntax_checks(message, maybe_encrypted):
         if err and not isinstance(err, str):
             raise BadForm('err must be a string')
 
-        if not '_snon' in _ctrl:
-            raise BadForm('not nonced')
-
     _auth = message.get('_auth')
     if _auth is not None and not isinstance(_auth, dict):
         raise BadForm('_auth must be a table')
@@ -255,8 +252,13 @@ def from_wire(message, secret):
     if version[0] != cc_version:
         raise BadVersion('unknown version %u' % version[0])
     rest = message[4:]
+    table = _decode_table(rest, True)
+    _basic_syntax_checks(table, True)
+    has_auth = '_auth' in table
 
-    if secret != None:
+    if secret is not None or has_auth:
+        if secret is None or not has_auth:
+            raise BadAuth('signature mismatch')
         if len(message) < 43:
             raise UnexpectedEnd('encrypted message too short')
         auth = rest[:21]
@@ -269,9 +271,6 @@ def from_wire(message, secret):
             raise BadAuth('unknown auth mechanism')
         if sig != msig:
             raise BadAuth('signature mismatch')
-
-    table = _decode_table(rest, True)
-    _basic_syntax_checks(table, True)
 
     _aes256z = table.get('_aes256z')
     _aes256 = table.get('_aes256')
