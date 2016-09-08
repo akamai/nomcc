@@ -219,11 +219,23 @@ def _basic_syntax_checks(message, maybe_encrypted):
             raise BadForm('_ctrl must be present')
         if not isinstance(_ctrl, dict):
             raise BadForm('_ctrl must be a table')
+
         _data = message.get('_data')
         if _data is None:
             raise BadForm('_data must be present')
         if not isinstance(_data, dict):
             raise BadForm('_data must be a table')
+
+        type = _data.get('type')
+        if type is None:
+            raise BadForm('type must be present in _data')
+        if not isinstance(type, str):
+            raise BadForm('type must be a string')
+
+        err = _data.get('err')
+        if err and not isinstance(err, str):
+            raise BadForm('err must be a string')
+
         if not '_snon' in _ctrl:
             raise BadForm('not nonced')
 
