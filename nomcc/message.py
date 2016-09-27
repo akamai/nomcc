@@ -27,12 +27,6 @@ def reply_to(request, request_type=None):
     s = request['_ctrl'].get('_seq')
     if s is not None:
         _ctrl['_seq'] = s
-    #
-    # State return
-    #
-    _state = request['_ctrl'].get('_state')
-    if _state is not None:
-        _ctrl['_state'] = _state
     return response
 
 def error(request, detail, request_type=None):
