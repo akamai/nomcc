@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2014,2016 Nominum, Inc.
+# Copyright (C) 2004-2017 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -164,6 +164,19 @@ class Connection(object):
         else:
             _ctrl.pop('_comp', None)
 
+    def _unnoncify(self, message):
+        _ctrl = message.get('_ctrl')
+        if _ctrl is not None and \
+           _ctrl['_sseq'] == maybe_encode(str(self.self_next - 1)):
+            self.self_next -= 1
+            # Return True if we successfully deleted it, False otherwise
+            if not ('_rpl' in _ctrl or '_evt' in _ctrl):
+                return self._delete_outstanding(self.self_next)[0]
+            else:
+                return False
+        else:
+            raise nomcc.exceptions.BadNoncing('out-of-sequence unnoncify')
+
     def _check(self, message):
         _ctrl = message['_ctrl']
 
@@ -302,7 +315,16 @@ class Connection(object):
     def write(self, message, state=None):
         self._noncify(message, state)
         self.trace('write', message)
-        wire = nomcc.wire.to_wire(message, self.secret)
+        try:
+            wire = nomcc.wire.to_wire(message, self.secret)
+        except Exception:
+            # Give back the sequence number.
+            if self._unnoncify(message):
+                # We only re-raise if we successfully deleted, as otherwise
+                # we're racing with close and close won.
+                raise
+            else:
+                return
         self.sock.sendall(wire)
 
     def getpeername(self):

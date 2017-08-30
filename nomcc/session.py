@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2016 Nominum, Inc.
+# Copyright (C) 2011-2017 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -90,6 +90,10 @@ class RequestState(object):
         self.done.set()
         return True
 
+    def return_exception(self, exception):
+        self.exception = exception
+        self.done.set()
+
 def _reader(session):
     """Reader thread."""
     try:
@@ -144,12 +148,36 @@ def _writer(session):
                     # request to exit
                     break
             session.not_idle()
-            session.connection.write(message, state)
+            try:
+                session.connection.write(message, state)
+            except (socket.error, socket.timeout):
+                # socket problems are not something we can continue from
+                # so reraise
+                raise
+            except Exception as e:
+                # Something went wrong in rendering, but nothing was sent,
+                # so the connection is still ok.  Try to inform the
+                # originator.
+                if state is not None:
+                    try:
+                        state.return_exception(e)
+                    except:
+                        # We don't expect this path to happen very
+                        # often, so we just trace it for now as
+                        # opposed to trying to notify the session
+                        # about the bad message some other way.
+                        (ty, va) = sys.exc_info()[:2]
+                        session.connection.trace("session writer thread",
+                                                 "sending message threw " +
+                                                 "exception %s: %s" % \
+                                                 (str(ty), str(va)))
     except Exception:
         (ty, va) = sys.exc_info()[:2]
         session.connection.trace("session writer thread",
                                  "exiting due to exception %s: %s" % \
                                  (str(ty), str(va)))
+        # We can't continue, so ask for shutdown.
+        session.request_close()
 
 class Session(nomcc.closer.ThreadedCloser):
     """A command channel session.
@@ -364,7 +392,7 @@ class Session(nomcc.closer.ThreadedCloser):
         return id
 
     def delete_sequence(self, id):
-        """Delete the sequence object for the specfied id.
+        """Delete the sequence object for the specified id.
 
         A KeyError exception will be raised if the specified sequence does
         not exist.
@@ -375,7 +403,7 @@ class Session(nomcc.closer.ThreadedCloser):
         sequence.close()
 
     def get_sequence(self, id):
-        """Get sequence object for the specfied id."""
+        """Get sequence object for the specified id."""
         with self.sequence_lock:
             return self.sequences.get(id)
 
