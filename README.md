@@ -15,7 +15,7 @@ Download the source file, unzip it, and then run
 
 ## About this release
 
-This is nomcc 1.0.0.
+This is nomcc 1.0.1.
 
 ## Example
 

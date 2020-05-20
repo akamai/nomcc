@@ -1,3 +1,4 @@
+# Copyright (C) 2019 Akamai Technologies, Inc.
 # Copyright (C) 2011-2014,2016 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +17,13 @@ import nomcc.exceptions
 
 DEFAULT_BATCHING = 20
 
+
 class Reader(object):
     def __init__(self, session, data, timeout, num, raise_error):
         if isinstance(data, str):
-            self.request = {'_data' : {'type': data}}
+            self.request = {'_data': {'type': data}}
         else:
-            self.request = {'_data' : data}
+            self.request = {'_data': data}
         self.session = session
         self.first = True
         self.done = False
@@ -55,12 +57,12 @@ class Reader(object):
                 self.done = True
             _data = response['_data']
         else:
-            request = {'_ctrl' : { '_seq' : self._seq },
-                       '_data' : { 'type' : 'next' }}
+            request = {'_ctrl': {'_seq': self._seq},
+                       '_data': {'type': 'next'}}
             if self.batch:
                 request['_ctrl']['_num'] = self._num
             response = self.session.tell(request, self.timeout, False, True)
-            if not '_more' in response['_ctrl']:
+            if '_more' not in response['_ctrl']:
                 self.done = True
             if self.batch and 'list' in response['_data']:
                 l = response['_data']['list']
@@ -85,6 +87,6 @@ class Reader(object):
         if not self.done:
             self.done = True
             if not self.first:
-                request = {'_ctrl' : { '_seq' : self._seq, '_end' : '1' },
-                           '_data' : { 'type' : 'next' }}
+                request = {'_ctrl': {'_seq': self._seq, '_end': '1'},
+                           '_data': {'type': 'next'}}
             response = self.session.tell(request, self.timeout)

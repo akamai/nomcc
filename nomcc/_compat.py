@@ -1,3 +1,4 @@
+# Copyright (C) 2019 Akamai Technologies, Inc.
 # Copyright (C) 2016 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,16 +30,44 @@ if sys.version_info > (3,):
     StringIO = io.StringIO
     binary_type = bytes
     string_types = (str,)
+
+    def decode(x):
+        # The input *must* be UTF8
+        # The output will be str(unicode)
+        return x.decode('utf8')
+
     def maybe_decode(x):
-        return x.decode()
+        # The input may be UTF8 or binary.
+        # If UTF8, output str(unicode), otherwise bytes
+        try:
+            return x.decode('utf8')
+        except UnicodeDecodeError:
+            return x
+
     def maybe_encode(x):
-        return x.encode()
+        if isinstance(x, str):
+            return x.encode('utf8')
+        else:
+            return x
 else:
     import StringIO
     StringIO = StringIO.StringIO
     binary_type = str
     string_types = (basestring,)
+
+    def decode(x):
+        # The input *must* be UTF8
+        # The output will always be str(bytes), for backwards compatibility.
+        x.decode('utf8')
+        return x
+
     def maybe_decode(x):
+        # The input may be UTF8 or binary.
+        # The output will always be str(bytes), for backwards compatibility.
         return x
+
     def maybe_encode(x):
-        return x
+        if isinstance(x, unicode):
+            return x.encode('utf8')
+        else:
+            return x

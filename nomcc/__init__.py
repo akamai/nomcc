@@ -1,3 +1,4 @@
+# Copyright (C) 2019 Akamai Technologies, Inc.
 # Copyright (C) 2011-2014,2016 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +15,7 @@
 
 import nomcc.session
 from nomcc.version import version
+
 
 def connect(*args, **kwargs):
     """Establish a command channel session with a server.

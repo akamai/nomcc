@@ -1,3 +1,4 @@
+# Copyright (C) 2019 Akamai Technologies, Inc.
 # Copyright (C) 2003-2014,2016 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +21,7 @@ An 'addrport' is a network address and port pair, corresponding to a
 
 import socket
 
+
 class Addrport(object):
     """Virtual base clase for addrports
 
@@ -30,6 +32,7 @@ class Addrport(object):
     address in python socket operations, e.g. socket.connect().
     """
     pass
+
 
 class Addrport4(Addrport):
     """An IPv4 addrport
@@ -45,12 +48,12 @@ class Addrport4(Addrport):
     If not specified, the port defaults to zero.
     """
 
-    def __init__(self, ap = None):
+    def __init__(self, ap=None):
         self.af = socket.AF_INET
         port_start = ap.find('#')
         if port_start >= 0:
             addr = ap[: port_start]
-            port = ap[port_start + 1 :]
+            port = ap[port_start + 1:]
         else:
             addr = ap
             port = '0'
@@ -70,6 +73,7 @@ class Addrport4(Addrport):
         else:
             return self.sockaddr
 
+
 class Addrport6(Addrport):
     """An IPv6 addrport
 
@@ -84,19 +88,19 @@ class Addrport6(Addrport):
     If not specified, the port defaults to zero.
     """
 
-    def __init__(self, ap = None):
+    def __init__(self, ap=None):
         self.af = socket.AF_INET6
         port_start = ap.find('#')
         if port_start >= 0:
             addrscope = ap[: port_start]
-            port = int(ap[port_start + 1 :])
+            port = int(ap[port_start + 1:])
         else:
             addrscope = ap
             port = '0'
         scope_start = ap.find('%')
         if scope_start >= 0:
             addr = addrscope[: scope_start]
-            scope = addrscope[scope_start + 1 :]
+            scope = addrscope[scope_start + 1:]
         else:
             addr = addrscope
             scope = 0
@@ -118,9 +122,12 @@ class Addrport6(Addrport):
         """The address that should be used to send to the service.
         """
         if self.sockaddr[0] == '::':
-            return ('::1', self.sockaddr[1], self.sockaddr[2], self.sockaddr[3])
+            return (
+                '::1', self.sockaddr[1], self.sockaddr[2], self.sockaddr[3]
+            )
         else:
             return self.sockaddr
+
 
 def new(text):
     """

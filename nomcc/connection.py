@@ -1,3 +1,4 @@
+# Copyright (C) 2019 Akamai Technologies, Inc.
 # Copyright (C) 2004-2017 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +36,7 @@ from nomcc._compat import *
 MAX_WIRE_SIZE = 4 * 1024 * 1024
 _U63_MAX = 2 ** 63 - 1
 
+
 def _generate_nonce():
     try:
         randomness = file('/dev/urandom', 'rb')
@@ -49,8 +51,9 @@ def _generate_nonce():
         value = int(random.random() * _U63_MAX)
     return value
 
+
 def _get_nonce_field(_ctrl, field, zero_ok=False):
-    if not field in _ctrl:
+    if field not in _ctrl:
         raise nomcc.exceptions.BadNoncing('no %s in _ctrl' % field)
     try:
         value = int(_ctrl[field])
@@ -64,6 +67,7 @@ def _get_nonce_field(_ctrl, field, zero_ok=False):
 
     return value
 
+
 class Connection(object):
     """A command channel connection.
 
@@ -72,7 +76,8 @@ class Connection(object):
     """
 
     def __init__(self, sock, secret, want_read=False,
-                 encryption_policy=nomcc.encryption.DESIRED, tracer=None):
+                 encryption_policy=nomcc.encryption.DESIRED, tracer=None,
+                 timeout=None):
         self.closed = False
         self.sock = sock
         self.secret = secret
@@ -107,9 +112,11 @@ class Connection(object):
             self.peer_nonce = 0
             self.peer_next = 0
             request = None
-        self.lock = threading.Lock() # covers "outstanding"
+        self.lock = threading.Lock()  # covers "outstanding"
         self.outstanding = {}
+        sock.settimeout(timeout)
         self._start_noncing(request)
+        sock.settimeout(None)
 
     def __enter__(self):
         return self
@@ -180,7 +187,7 @@ class Connection(object):
     def _check(self, message):
         _ctrl = message['_ctrl']
 
-        if self.encrypted and not '_enc' in _ctrl:
+        if self.encrypted and '_enc' not in _ctrl:
             raise nomcc.exceptions.BadNoncing(
                 'got an unencrypted message on an encrypted connection')
 
@@ -222,7 +229,7 @@ class Connection(object):
         encrypted = False
         compressed = False
         if request is None:
-            message = {'_ctrl' : {}, '_data' : {'type' : b'version'}}
+            message = {'_ctrl': {}, '_data': {'type': b'version'}}
             if self.encryption_policy != nomcc.encryption.UNENCRYPTED:
                 message['_ctrl']['_initenc'] = [b'aes256z', b'aes256']
         else:
@@ -306,7 +313,7 @@ class Connection(object):
     def _read_response(self, request):
         (response, state) = self.read()
         _ctrl = response['_ctrl']
-        if not '_rpl' in _ctrl:
+        if '_rpl' not in _ctrl:
             raise nomcc.exceptions.NotResponse
         if _ctrl['_rseq'] != request['_ctrl']['_sseq']:
             raise nomcc.exceptions.BadResponse
@@ -330,8 +337,10 @@ class Connection(object):
     def getpeername(self):
         return self.sock.getpeername()
 
+
 def new(*args, **kwargs):
     return Connection(*args, **kwargs)
+
 
 def channelify(where):
     if isinstance(where, nomcc.channel.Channel):
@@ -356,6 +365,7 @@ def channelify(where):
         raise nomcc.exceptions.BadChannelValue(where)
     return channel
 
+
 def connect(where, timeout=None, encryption_policy=nomcc.encryption.DESIRED,
             source=None, tracer=None):
     """Create a command channel connection.
@@ -367,8 +377,8 @@ def connect(where, timeout=None, encryption_policy=nomcc.encryption.DESIRED,
     name of a channel to be retrieved from /etc/channel.conf, or a channel
     literal of the form address[#port[#secret]].
 
-    'timeout' is the timeout for the initial socket.connect().  The
-    default is None.
+    'timeout' is the timeout for the initial socket.connect() and nonce setup.
+    The default is None.
 
     'encryption_policy' specifies the encryption policy to use for the
     connection, the default is nomcc.encryption.DESIRED, which
@@ -396,13 +406,14 @@ def connect(where, timeout=None, encryption_policy=nomcc.encryption.DESIRED,
             # source is just an address, not a sockaddr; make a
             # sockaddr with a 0 port
             if channel.addrport.af == socket.AF_INET:
-                source=(source, 0)
+                source = (source, 0)
             elif channel.addrport.af == socket.AF_INET6:
-                source=(source, 0, 0, 0)
+                source = (source, 0, 0, 0)
             else:
                 raise nomcc.exceptions.UnsupportedAddressFamily
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(source)
     sock.connect(channel.addrport.sending_sockaddr())
     sock.settimeout(None)
-    return Connection(sock, channel.secret, None, encryption_policy, tracer)
+    return Connection(sock, channel.secret, None, encryption_policy, tracer,
+                      timeout)

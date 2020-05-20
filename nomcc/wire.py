@@ -1,3 +1,4 @@
+# Copyright (C) 2019 Akamai Technologies, Inc.
 # Copyright (C) 2001-2014,2016 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +30,8 @@ import zlib
 import Crypto.Cipher.AES
 
 from nomcc._compat import *
+from nomcc.exceptions import BadVersion, BadAuth, UnexpectedEnd, BadSyntax, \
+     BadForm, NeedSecret
 
 __all__ = ["to_wire", "from_wire"]
 
@@ -47,8 +50,6 @@ cc_aes256_blocksize = 16
 # Padding must be as long as blocksize
 cc_aes256_padding = b'\xde\xad\xbe\xef' * 4
 
-from nomcc.exceptions import BadVersion, BadAuth, UnexpectedEnd, BadSyntax, \
-     BadForm, NeedSecret
 
 def _key_from_secret(secret):
     """Convert an arbitrary string into a 32 octet key appropriate for
@@ -58,9 +59,10 @@ def _key_from_secret(secret):
     m.update(maybe_encode(secret))
     return m.digest()
 
+
 def _encrypt_message(key, message):
     # Generate a random IV
-    iv = [random.randint(0,0xff) for x in range(cc_aes256_blocksize)]
+    iv = [random.randint(0, 0xff) for x in range(cc_aes256_blocksize)]
     iv = struct.pack('%dB' % len(iv), *iv)
     # Pad message to AES blocksize
     msglen = len(message)
@@ -71,6 +73,7 @@ def _encrypt_message(key, message):
     payload = iv + cipher.encrypt(message)
     return payload
 
+
 def _decrypt_message(key, message):
     # Fetch IV
     iv = message[0:cc_aes256_blocksize]
@@ -80,15 +83,18 @@ def _decrypt_message(key, message):
     plain = cipher.decrypt(message)
     return plain
 
+
 def _compress_message(message):
     compress = zlib.compressobj(zlib.Z_DEFAULT_COMPRESSION, zlib.DEFLATED, -15)
     return compress.compress(message) + compress.flush(zlib.Z_FINISH)
+
 
 def _decompress_message(message):
     decompress = zlib.decompressobj(-15)
     return decompress.decompress(message) + decompress.flush()
 
-def to_wire(message, secret):
+
+def to_wire(message, secret=None):
     """Convert a message from dictionary format to wire format
 
     If the secret is not None, it will be used to sign the message.
@@ -103,7 +109,7 @@ def to_wire(message, secret):
     version = struct.pack('!I', cc_version)
 
     if '_enc' in message['_ctrl']:
-        if secret == None:
+        if secret is None:
             raise NeedSecret
 
         # Since we're using a block cipher, the message may be padded,
@@ -118,19 +124,20 @@ def to_wire(message, secret):
 
         key = _key_from_secret(secret)
         payload = _encrypt_message(key, unsigned)
-        unsigned = _encode_table({ field_name: payload })
+        unsigned = _encode_table({field_name: payload})
 
-    if secret != None:
-        h = hmac.new(maybe_encode(secret))
+    if secret is not None:
+        h = hmac.new(maybe_encode(secret), digestmod=hashlib.md5)
         h.update(unsigned)
         sig = base64.encodestring(h.digest())[:-3]              # strip '==\n'
-        res = version + _encode_table({ '_auth' : { 'hmd5':sig } }) + unsigned
+        res = version + _encode_table({'_auth': {'hmd5': sig}}) + unsigned
     else:
         res = version + unsigned
 
     l = len(res)
 
     return struct.pack('!I', l) + res
+
 
 def _encode_table(item):
     s = b''
@@ -139,6 +146,7 @@ def _encode_table(item):
         assert(l < 256)
         s += struct.pack('B', l) + maybe_encode(k) + _encode(item[k])
     return (s)
+
 
 def _encode(item):
     if isinstance(item, dict):
@@ -152,7 +160,7 @@ def _encode(item):
     else:
         if isinstance(item, bytes):
             s = item
-        elif isinstance(item, str):
+        elif isinstance(item, string_types):
             s = maybe_encode(item)
         else:
             s = maybe_encode(str(item))
@@ -160,13 +168,14 @@ def _encode(item):
         t = cc_vtype_binarydata
     return struct.pack('!BI', t, l) + s
 
+
 def _decode_table(item, top_level=False, want_stringify=None):
     t = {}
     while item != b'':
         l = struct.unpack('B', item[:1])[0] + 1
         if len(item) < l:
             raise UnexpectedEnd('table too short')
-        key = maybe_decode(item[1:l])
+        key = decode(item[1:l])
         if top_level and key == '_data' and want_stringify is None:
             # We don't already have a stringify setting, and this is
             # the top-level _data section, which we want stringified.
@@ -180,6 +189,7 @@ def _decode_table(item, top_level=False, want_stringify=None):
         item = rest[l:]
     return t
 
+
 def _decode_list(item, want_stringify=False):
     li = []
     while item != b'':
@@ -187,6 +197,7 @@ def _decode_list(item, want_stringify=False):
         li.append(value)
         item = item[l:]
     return li
+
 
 def _decode(item, want_stringify=False):
     if len(item) < 5:
@@ -200,12 +211,15 @@ def _decode(item, want_stringify=False):
         if want_stringify:
             value = maybe_decode(value)
     elif type == cc_vtype_table:
-        value = _decode_table(rest[:l], False, want_stringify)
+        value = _decode_table(
+            rest[:l], top_level=False, want_stringify=want_stringify
+        )
     elif type == cc_vtype_list:
         value = _decode_list(rest[:l], want_stringify)
     else:
         raise BadForm('unknown value type')
     return (value, l + 5)
+
 
 def _basic_syntax_checks(message, maybe_encrypted):
     if maybe_encrypted and (message.get('_aes256') or message.get('_aes256z')):
@@ -240,7 +254,8 @@ def _basic_syntax_checks(message, maybe_encrypted):
     if _auth is not None and not isinstance(_auth, dict):
         raise BadForm('_auth must be a table')
 
-def from_wire(message, secret):
+
+def from_wire(message, secret=None):
     """Convert a message from wire format to dictionary format
 
     If the secret is not None, it will be used to verify the message.
@@ -252,7 +267,7 @@ def from_wire(message, secret):
     if version[0] != cc_version:
         raise BadVersion('unknown version %u' % version[0])
     rest = message[4:]
-    table = _decode_table(rest, True)
+    table = _decode_table(rest, top_level=True)
     _basic_syntax_checks(table, True)
     has_auth = '_auth' in table
 
@@ -264,7 +279,7 @@ def from_wire(message, secret):
         auth = rest[:21]
         msig = rest[21:43]
         payload = rest[43:]
-        h = hmac.new(maybe_encode(secret))
+        h = hmac.new(maybe_encode(secret), digestmod=hashlib.md5)
         h.update(payload)
         sig = base64.encodestring(h.digest())[:-3]    # strip '==\n'
         if auth != cc_auth_fixed:
@@ -281,7 +296,7 @@ def from_wire(message, secret):
     else:
         if _aes256z is not None:
             encrypted_data = _aes256z
-            compressed = True;
+            compressed = True
         else:
             encrypted_data = _aes256
             compressed = False
@@ -305,7 +320,7 @@ def from_wire(message, secret):
 
     if wirelen > len(wire):
         raise UnexpectedEnd('inner message too short')
-    table = _decode_table(wire[0:wirelen], True)
+    table = _decode_table(wire[0:wirelen], top_level=True)
     _basic_syntax_checks(table, False)
 
     _ctrl = table.get('_ctrl')

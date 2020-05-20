@@ -1,3 +1,4 @@
+# Copyright (C) 2019 Akamai Technologies, Inc.
 # Copyright (C) 2011-2014,2016 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +17,7 @@
 
 import nomcc.addrport
 
+
 class Channel(object):
     def __init__(self, name, addrport, secret=None, options=None):
         self.name = name
@@ -32,6 +34,7 @@ class Channel(object):
         if options is None:
             options = {}
         self.options = options
+
 
 def new(*args, **kwargs):
     return Channel(*args, **kwargs)

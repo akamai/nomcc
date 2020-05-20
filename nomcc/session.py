@@ -1,3 +1,4 @@
+# Copyright (C) 2019 Akamai Technologies, Inc.
 # Copyright (C) 2011-2017 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +25,7 @@ import nomcc.encryption
 import nomcc.exceptions
 import nomcc.message
 import nomcc.sequence
+
 
 class RequestState(object):
     """RequestState represents a request "in flight".
@@ -94,6 +96,7 @@ class RequestState(object):
         self.exception = exception
         self.done.set()
 
+
 def _reader(session):
     """Reader thread."""
     try:
@@ -131,10 +134,11 @@ def _reader(session):
     except Exception:
         (ty, va) = sys.exc_info()[:2]
         session.connection.trace("session reader thread",
-                                 "exiting due to exception %s: %s" % \
+                                 "exiting due to exception %s: %s" %
                                  (str(ty), str(va)))
     finally:
         session.request_close()
+
 
 def _writer(session):
     """Writer thread."""
@@ -161,7 +165,7 @@ def _writer(session):
                 if state is not None:
                     try:
                         state.return_exception(e)
-                    except:
+                    except Exception:
                         # We don't expect this path to happen very
                         # often, so we just trace it for now as
                         # opposed to trying to notify the session
@@ -169,15 +173,16 @@ def _writer(session):
                         (ty, va) = sys.exc_info()[:2]
                         session.connection.trace("session writer thread",
                                                  "sending message threw " +
-                                                 "exception %s: %s" % \
+                                                 "exception %s: %s" %
                                                  (str(ty), str(va)))
     except Exception:
         (ty, va) = sys.exc_info()[:2]
         session.connection.trace("session writer thread",
-                                 "exiting due to exception %s: %s" % \
+                                 "exiting due to exception %s: %s" %
                                  (str(ty), str(va)))
         # We can't continue, so ask for shutdown.
         session.request_close()
+
 
 class Session(nomcc.closer.ThreadedCloser):
     """A command channel session.
@@ -201,19 +206,19 @@ class Session(nomcc.closer.ThreadedCloser):
         super(Session, self).__init__()
         self.connection = connection
         self.dispatch = dispatch
-        self.sequence_lock = threading.Lock()   # covers sequences and
-                                                # next_id
+        # sequence_loc covers sequences and next_id
+        self.sequence_lock = threading.Lock()
         self.sequences = {}
         self.next_id = 1
-        self.write_lock = threading.Lock()      # covers write_queue and
-                                                # wake_writer
+        # write_lock covers write_queue and wake_writer
+        self.write_lock = threading.Lock()
         self.write_queue = []
         self.wake_writer = threading.Condition(self.write_lock)
         self.reader = threading.Thread(target=_reader, args=[self],
                                        name="cc-reader")
         self.reader.daemon = True
         self.writer = threading.Thread(target=_writer, args=[self],
-                                       name = "cc-writer")
+                                       name="cc-writer")
         self.writer.daemon = True
         self.started = False
         if want_start:
@@ -315,13 +320,13 @@ class Session(nomcc.closer.ThreadedCloser):
 
         """
         if isinstance(request, str):
-            request = {'_data' : {'type' : request}}
+            request = {'_data': {'type': request}}
             return_data = True
-        elif not '_data' in request:
+        elif '_data' not in request:
             # Request is not a full message; caller prefers to deal
             # just with _data.  Wrap into a proper message, and
             # remember to unwrap later.
-            request = {'_data' : request}
+            request = {'_data': request}
             return_data = True
         else:
             return_data = False
@@ -353,7 +358,9 @@ class Session(nomcc.closer.ThreadedCloser):
 
         Returns the response.
         """
-        return self.ask(request, raise_error, sequence_ok).get_response(timeout)
+        return self.ask(
+            request, raise_error, sequence_ok
+        ).get_response(timeout)
 
     def sequence(self, data, timeout=nomcc.closer.DEFAULT_TIMEOUT,
                  num=nomcc.sequence.DEFAULT_BATCHING,
@@ -420,12 +427,14 @@ class Session(nomcc.closer.ThreadedCloser):
         """
         self.dispatch = dispatch
 
+
 def new(*args, **kwargs):
     """Create a new session.
 
     All arguments are passed directly to the Session constructor.
     """
     return Session(*args, **kwargs)
+
 
 def connect(*args, **kwargs):
     """Establish a command channel session with a server.

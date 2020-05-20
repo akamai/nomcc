@@ -1,3 +1,4 @@
+# Copyright (C) 2019 Akamai Technologies, Inc.
 # Copyright (C) 2011-2014,2016 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,11 +40,13 @@ import time
 import nomcc.exceptions
 from nomcc._compat import *
 
+
 def get_expiration(timeout):
     if timeout is None:
         return None
     else:
         return time.time() + timeout
+
 
 def _poll_for(fd, readable, writable, error, timeout):
     """
@@ -72,6 +75,7 @@ def _poll_for(fd, readable, writable, error, timeout):
 
     return bool(event_list)
 
+
 def _select_for(fd, readable, writable, error, timeout):
     """
     @param fd: File descriptor (int).
@@ -97,6 +101,7 @@ def _select_for(fd, readable, writable, error, timeout):
 
     return bool((rcount or wcount or xcount))
 
+
 def _wait_for(fd, readable, writable, error, expiration):
     done = False
     while not done:
@@ -114,6 +119,7 @@ def _wait_for(fd, readable, writable, error, expiration):
                 raise e
         done = True
 
+
 def _set_polling_backend(fn):
     """
     Internal API. Do not use.
@@ -121,6 +127,7 @@ def _set_polling_backend(fn):
     global _polling_backend
 
     _polling_backend = fn
+
 
 if hasattr(select, 'poll'):
     # Prefer poll() on platforms that support it because it has no
@@ -130,8 +137,10 @@ if hasattr(select, 'poll'):
 else:
     _polling_backend = _select_for
 
+
 def wait_for_readable(s, expiration):
     _wait_for(s, True, False, True, expiration)
+
 
 def wait_for_writable(s, expiration):
     _wait_for(s, False, True, True, expiration)

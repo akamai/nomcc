@@ -1,3 +1,4 @@
+# Copyright (C) 2019 Akamai Technologies, Inc.
 # Copyright (C) 2011-2016 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +30,7 @@ import time
 
 DEFAULT_TIMEOUT = 300
 
+
 def _closer(tcloser):
     with tcloser._closer_lock:
         while not tcloser._closing:
@@ -58,6 +60,7 @@ def _closer(tcloser):
                 sleep = None
             tcloser._wake_closer.wait(sleep)
     tcloser._do_close()
+
 
 class ThreadedCloser(object):
     def __init__(self):

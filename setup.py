@@ -1,3 +1,4 @@
+# Copyright (C) 2019 Akamai Technologies, Inc.
 # Copyright (C) 2011-2014,2016 Nominum, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +20,13 @@ except ImportError:
 
 setup(
     name         = 'nomcc',
-    version      = '1.0.0',
+    version      = '1.0.1',
     description  = 'Nominum Command Channel Library',
-    long_description = '''nomcc is a toolkit for communicating with Nominum
-    products using the Nominum Command Channel.''',
+    long_description = '''nomcc is a toolkit for communicating with Akamai Carrier (formerly Nominum) products using the Nominum Command Channel.''',
     packages     = ['nomcc'],
-    author       = 'Nominum',
-    url          = 'https://github.com/nominum/nomcc',
-    install_requires = ['pycrypto'],
+    author       = 'Akamai',
+    url          = 'https://github.com/akamai/nomcc',
+    install_requires = ['pycryptodome'],
     classifiers = [
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -42,6 +42,9 @@ setup(
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     provides = ['nomcc'],
     zip_safe    = True,
