@@ -129,7 +129,7 @@ def to_wire(message, secret=None):
     if secret is not None:
         h = hmac.new(maybe_encode(secret), digestmod=hashlib.md5)
         h.update(unsigned)
-        sig = base64.encodestring(h.digest())[:-3]              # strip '==\n'
+        sig = base64.b64encode(h.digest())[:-2]              # strip '=='
         res = version + _encode_table({'_auth': {'hmd5': sig}}) + unsigned
     else:
         res = version + unsigned
@@ -281,7 +281,7 @@ def from_wire(message, secret=None):
         payload = rest[43:]
         h = hmac.new(maybe_encode(secret), digestmod=hashlib.md5)
         h.update(payload)
-        sig = base64.encodestring(h.digest())[:-3]    # strip '==\n'
+        sig = base64.b64encode(h.digest())[:-2]    # strip '=='
         if auth != cc_auth_fixed:
             raise BadAuth('unknown auth mechanism')
         if sig != msig:
