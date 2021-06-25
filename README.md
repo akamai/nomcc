@@ -2,20 +2,28 @@
 
 ## Introduction
 
-[https://github.com/akamai/nomcc](https://github.com/akamai/nomcc)
-
 The "nomcc" Python library allows easy communication with services that use
-the Nominum Command Channel protocol.  It works with Python 2.6 and 2.7,
-and with Python 3.3 and later.
+the Nominum Command Channel protocol.  It works with Python 2.7, and
+with Python 3.3 and later.
 
 ## Installation
 
-Download the source file, unzip it, and then run
-`sudo python setup.py install`
+Either download the source file and unzip it, or clone the repository,
+and then run:
+`pip install .`
 
-## About this release
+> Note: if you intend to install directly on a machine instead of
+> into a Python virtualenv, you may need to run the command as root.
 
-This is nomcc 1.0.1.
+If you do not have pip, you may install it by fetching and running the
+appropriate `get-pip.py` script:
+
+```
+# Set $PYTHON to be the path to the Python you are using.
+pyver=`$PYTHON -c 'import sys; print(".".join(map(str, sys.version_info[:2])))'`
+curl -OL https://bootstrap.pypa.io/pip/${pyver}/get-pip.py
+$PYTHON get-pip.py
+```
 
 ## Example
 
@@ -33,3 +41,7 @@ with nomcc.connect('cacheserve') as session:
      for r in session.sequence('resolver.mget'):
          print r
 ```
+
+## Bug reports
+
+Bug reports may be filed at https://github.com/akamai/nomcc.
