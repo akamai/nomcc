@@ -20,13 +20,13 @@ except ImportError:
 
 setup(
     name         = 'nomcc',
-    version      = '1.0.1',
+    version      = '1.0.2',
     description  = 'Nominum Command Channel Library',
     long_description = '''nomcc is a toolkit for communicating with Akamai Carrier (formerly Nominum) products using the Nominum Command Channel.''',
     packages     = ['nomcc'],
     author       = 'Akamai',
     url          = 'https://github.com/akamai/nomcc',
-    install_requires = ['pycryptodome'],
+    install_requires = ['cryptography > 2.6'],
     classifiers = [
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -44,6 +44,8 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     provides = ['nomcc'],
     zip_safe    = True,
