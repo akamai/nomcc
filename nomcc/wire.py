@@ -27,7 +27,7 @@ import random
 
 import zlib
 
-import Crypto.Cipher.AES
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from nomcc._compat import *
 from nomcc.exceptions import BadVersion, BadAuth, UnexpectedEnd, BadSyntax, \
@@ -69,8 +69,9 @@ def _encrypt_message(key, message):
     padlen = ((msglen + 0xF) & ~0xF) - msglen
     message += b'\0' * padlen
     # Encrypt
-    cipher = Crypto.Cipher.AES.new(key, Crypto.Cipher.AES.MODE_CBC, IV=iv)
-    payload = iv + cipher.encrypt(message)
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+    encryptor = cipher.encryptor()
+    payload = iv + encryptor.update(message) + encryptor.finalize()
     return payload
 
 
@@ -79,8 +80,9 @@ def _decrypt_message(key, message):
     iv = message[0:cc_aes256_blocksize]
     message = message[cc_aes256_blocksize:]
     # Decrypt
-    cipher = Crypto.Cipher.AES.new(key, Crypto.Cipher.AES.MODE_CBC, IV=iv)
-    plain = cipher.decrypt(message)
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+    decryptor = cipher.decryptor()
+    plain = decryptor.update(message) + decryptor.finalize()
     return plain
 
 
