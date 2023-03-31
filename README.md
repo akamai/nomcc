@@ -27,20 +27,43 @@ $PYTHON get-pip.py
 
 ## Example
 
-Here's an example of how to use nomcc to print the answer to a simple
-version query, update a resolver, and to iterate the list of resolvers.
+Here is an example of how to use nomcc to communicate with an engine.
 
 ```python
 import nomcc
 
-with nomcc.connect('cacheserve') as session:
-     print session.tell('version')
-     print session.tell({'type': 'resolver.update',
-                     'name': 'world',
-             'dnssec-aware': True})
-     for r in session.sequence('resolver.mget'):
-         print r
+# Connect to the engine named "engine".
+with nomcc.connect('engine') as session:
+    # The "version" command takes no parameters, so can be passed as a string.
+    # The response will be a table.
+    print(session.tell('version'))
+
+    # The "room" object has a color and a list of furniture.  This updates
+    # an existing room, using the "room.update" command.
+    print(session.tell({'type': 'room.update',
+                        'name': 'kitchen',
+                        'color' : 'white',
+                        'furniture' : ('table', 'chairs')})
+
+    # This sends a command which does not exist, and will raise an exception.
+    # To get a response containing the error, add `raise_error=False` to the
+    # call, and the response will contain an "err" field with the error.
+    try:
+        print(session.tell('bogus'))
+    except nomcc.exceptions.Error as e:
+        print(f'error: {str(e)}')
+
+    # This retrieves the configuration of each room, with a separate response
+    # message for each room.
+    for r in session.sequence('room.mget'):
+        print(r)
 ```
+
+## Format
+
+Field values may be strings (`str`), lists (`list`), and tables (`dict`).  The
+message is a table.  When sending a message, `tuple`s are converted into lists,
+and other types are converted into strings.
 
 ## Bug reports
 
