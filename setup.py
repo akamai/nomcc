@@ -26,7 +26,7 @@ setup(
     packages     = ['nomcc'],
     author       = 'Akamai',
     url          = 'https://github.com/akamai/nomcc',
-    install_requires = ['cryptography > 2.6'],
+    install_requires = ['cryptography > 3.1'],
     classifiers = [
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
