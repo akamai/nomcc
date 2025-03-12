@@ -436,7 +436,7 @@ def new(*args, **kwargs):
     return Session(*args, **kwargs)
 
 
-def connect(*args, **kwargs):
+def connect(*args, dispatch=None, **kwargs):
     """Establish a command channel session with a server.
 
     All arguments are passed directly to nomcc.connection.connect(), whose
@@ -462,7 +462,14 @@ def connect(*args, **kwargs):
     a message string.  The method is invoked at various points of the
     during the connection and can be used for debugging.
 
+    'dispatch' is a method taking a session object, a message object, and
+    a state object.  The method is invoked for each received message that is
+    not a response to an in-flight query.  The nomcc.method.kind() method
+    can be used to determine the kind of message, which is either "request",
+    "response", or "event".
+
     Returns a Session object.
 
     """
-    return Session(nomcc.connection.connect(*args, **kwargs))
+    return Session(nomcc.connection.connect(*args, **kwargs),
+                   dispatch=dispatch)
