@@ -43,6 +43,12 @@ def connect(*args, **kwargs):
     a message string.  The method is invoked at various points of the
     during the connection and can be used for debugging.
 
+    'dispatch' is a method taking a session object, a message object, and
+    a state object.  The method is invoked for each received message that is
+    not a response to an in-flight query.  The nomcc.method.kind() method
+    can be used to determine the kind of message, which is either "request",
+    "response", or "event".
+
     Returns a Session object.
 
     """

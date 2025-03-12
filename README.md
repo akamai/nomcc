@@ -25,7 +25,7 @@ curl -OL https://bootstrap.pypa.io/pip/${pyver}/get-pip.py
 $PYTHON get-pip.py
 ```
 
-## Example
+## Examples
 
 Here is an example of how to use nomcc to communicate with an engine.
 
@@ -57,6 +57,23 @@ with nomcc.connect('engine') as session:
     # message for each room.
     for r in session.sequence('room.mget'):
         print(r)
+```
+
+And another example, which requests events and prints any that it receives in
+one minute.
+
+```python
+import nomcc
+
+def print_event(session, message, state):
+    if nomcc.message.kind(message) != 'event':
+        print('received a message that is not an event')
+    else:
+        print(f'received event: {message}')
+
+with nomcc.connect('engine', dispatch=print_event) as session:
+    session.tell('request-events')
+    time.sleep(60)
 ```
 
 ## Format
