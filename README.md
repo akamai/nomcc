@@ -59,21 +59,28 @@ with nomcc.connect('engine') as session:
         print(r)
 ```
 
-And another example, which requests events and prints any that it receives in
+And another example, which requests and prints events.
 one minute.
 
 ```python
+import queue
+
 import nomcc
 
-def print_event(session, message, state):
-    if nomcc.message.kind(message) != 'event':
-        print('received a message that is not an event')
-    else:
-        print(f'received event: {message}')
+q = queue.SimpleQueue()
+
+def handle(session, message, state):
+    q.put(message)
 
 with nomcc.connect('engine', dispatch=print_event) as session:
     session.tell('request-events')
-    time.sleep(60)
+    while True:
+        message = q.get()
+        if nomcc.message.kind(message) != 'event':
+            print('received a message that is not an event')
+        else:
+            print(f'received event: {message["_data"]}')
+
 ```
 
 ## Format

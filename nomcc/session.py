@@ -466,7 +466,9 @@ def connect(*args, dispatch=None, **kwargs):
     a state object.  The method is invoked for each received message that is
     not a response to an in-flight query.  The nomcc.method.kind() method
     can be used to determine the kind of message, which is either "request",
-    "response", or "event".
+    "response", or "event".  Note that message dispatch is
+    serialized, so no other messages will be received while the handler is
+    running.
 
     Returns a Session object.
 
