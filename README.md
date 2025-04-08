@@ -60,7 +60,6 @@ with nomcc.connect('engine') as session:
 ```
 
 And another example, which requests and prints events.
-one minute.
 
 ```python
 import queue
