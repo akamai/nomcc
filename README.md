@@ -68,10 +68,10 @@ import nomcc
 
 q = queue.SimpleQueue()
 
-def handle(session, message, state):
+def handle_event(session, message, state):
     q.put(message)
 
-with nomcc.connect('engine', dispatch=print_event) as session:
+with nomcc.connect('engine', dispatch=handle_event) as session:
     session.tell('request-events')
     while True:
         message = q.get()
