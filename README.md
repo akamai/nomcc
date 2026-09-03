@@ -43,7 +43,7 @@ with nomcc.connect('engine') as session:
     print(session.tell({'type': 'room.update',
                         'name': 'kitchen',
                         'color' : 'white',
-                        'furniture' : ('table', 'chairs')})
+                        'furniture' : ('table', 'chairs')}))
 
     # This sends a command which does not exist, and will raise an exception.
     # To get a response containing the error, add `raise_error=False` to the
